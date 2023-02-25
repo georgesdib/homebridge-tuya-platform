@@ -2,6 +2,7 @@ import { TuyaDeviceSchema, TuyaDeviceSchemaType } from '../device/TuyaDevice';
 import BaseAccessory from './BaseAccessory';
 import { configureName } from './characteristic/Name';
 import { configureOn } from './characteristic/On';
+import { configureHistory } from './characteristic/History';
 import { configureEnergyUsage } from './characteristic/EnergyUsage';
 import { configureCurrentTemperature } from './characteristic/CurrentTemperature';
 import { configureCurrentRelativeHumidity } from './characteristic/CurrentRelativeHumidity';
@@ -17,13 +18,11 @@ const SCHEMA_CODE = {
 };
 
 export default class SwitchAccessory extends BaseAccessory {
-
   requiredSchema() {
     return [SCHEMA_CODE.ON];
   }
 
   configureServices() {
-
     const oldService = this.accessory.getService(this.mainService());
     if (oldService && oldService?.subtype === undefined) {
       this.platform.log.warn('Remove old service:', oldService.UUID);
@@ -31,32 +30,41 @@ export default class SwitchAccessory extends BaseAccessory {
     }
 
     const schemata = this.device.schema.filter(
-      (schema) => schema.code.startsWith('switch') && schema.type === TuyaDeviceSchemaType.Boolean,
+      (schema) =>
+        schema.code.startsWith('switch') &&
+        schema.type === TuyaDeviceSchemaType.Boolean,
     );
 
     schemata.forEach((schema) => {
-      const name = (schemata.length === 1) ? this.device.name : schema.code;
+      const name = schemata.length === 1 ? this.device.name : schema.code;
       this.configureSwitch(schema, name);
     });
 
-
     // Other
-    configureCurrentTemperature(this, undefined, this.getSchema(...SCHEMA_CODE.CURRENT_TEMP));
-    configureCurrentRelativeHumidity(this, undefined, this.getSchema(...SCHEMA_CODE.CURRENT_HUMIDITY));
+    configureCurrentTemperature(
+      this,
+      undefined,
+      this.getSchema(...SCHEMA_CODE.CURRENT_TEMP),
+    );
+    configureCurrentRelativeHumidity(
+      this,
+      undefined,
+      this.getSchema(...SCHEMA_CODE.CURRENT_HUMIDITY),
+    );
   }
-
 
   mainService() {
     return this.Service.Switch;
   }
 
   configureSwitch(schema: TuyaDeviceSchema, name: string) {
-
-    const service = this.accessory.getService(schema.code)
-      || this.accessory.addService(this.mainService(), name, schema.code);
+    const service =
+      this.accessory.getService(schema.code) ||
+      this.accessory.addService(this.mainService(), name, schema.code);
 
     configureName(this, service, name);
     configureOn(this, service, schema);
+    configureHistory(this, schema);
 
     if (schema.code === this.getSchema(...SCHEMA_CODE.ON)?.code) {
       configureEnergyUsage(
@@ -70,5 +78,4 @@ export default class SwitchAccessory extends BaseAccessory {
       );
     }
   }
-
 }

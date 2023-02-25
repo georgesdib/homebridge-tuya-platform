@@ -40,6 +40,7 @@
     "color-convert": "^2.0.1",
     "crypto-js": "^4.1.1",
     "debounce": "^1.2.1",
+    "fakegato-history": "^0.6.3",
     "jsonschema": "^1.4.1",
     "kelvin-to-rgb": "^1.0.2",
     "lodash.isequal": "^4.5.0",
